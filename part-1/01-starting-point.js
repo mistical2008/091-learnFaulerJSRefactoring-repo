@@ -34,6 +34,17 @@ function usd(aNumber) {
 }
 
 function statement(invoice, plays) {
+    let result = `Statement for ${invoice.customer}\n`;
+
+    for (const perf of invoice.performances) {
+        result += ` ${playFor(perf).name}: ${usd(amountFor(perf) / 100)}`;
+        result += ` (${perf.audience} seats)\n`;
+    }
+
+    result += `Amount owed is ${usd(totalAmount() / 100)}\n`;
+    result += `You earned ${totalVolumeCredits()} credits\n`;
+    return result;
+
     function playFor(aPerformance) {
         return plays[aPerformance.playID];
     }
@@ -84,22 +95,16 @@ function statement(invoice, plays) {
         return result;
     }
 
-    let totalAmount = 0;
-    // console.log(invoice);
-    // console.log(plays);
-
-    let result = `Statement for ${invoice.customer}\n`;
-
-    for (const perf of invoice.performances) {
-        // Вывод строки счета
-        result += ` ${playFor(perf).name}: ${usd(amountFor(perf) / 100)}`;
-        result += ` (${perf.audience} seats)\n`;
-        totalAmount += amountFor(perf);
+    function totalAmount() {
+        let result = 0;
+        for (const perf of invoice.performances) {
+            result += amountFor(perf);
+        }
+        return result;
     }
 
-    result += `Amount owed is ${usd(totalAmount / 100)}\n`;
-    result += `You earned ${totalVolumeCredits()} credits\n`;
-    return result;
+    // console.log(invoice);
+    // console.log(plays);
 }
 
 const res = statement(invoiceObj[0], playsObj);
