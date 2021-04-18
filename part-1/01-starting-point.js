@@ -34,43 +34,16 @@ function usd(aNumber) {
 }
 
 function statement(invoice, plays) {
-    let result = `Statement for ${invoice.customer}\n`;
-
-    for (const perf of invoice.performances) {
-        result += ` ${playFor(perf).name}: ${usd(amountFor(perf) / 100)}`;
-        result += ` (${perf.audience} seats)\n`;
-    }
-
-    result += `Amount owed is ${usd(totalAmount() / 100)}\n`;
-    result += `You earned ${totalVolumeCredits()} credits\n`;
-    return result;
-
-    function playFor(aPerformance) {
-        return plays[aPerformance.playID];
-    }
-
-    function volumeCreditsFor(aPerformance) {
-        let result = 0;
-        result += Math.max(aPerformance.audience - 30, 0);
-
-        // Дополнительный бонус за каждые 10 комедий
-        if (playFor(aPerformance).type === 'comedy') result += Math.floor(aPerformance.audience / 5);
-        return result;
-    }
-
-    function totalVolumeCredits() {
-        let volumeCredits = 0;
-
-        for (const perf of invoice.performances) {
-            volumeCredits = volumeCreditsFor(perf);
-        }
-        return volumeCredits;
-    }
+    const statementData = {};
+    statementData.customer = invoice.customer;
+    statementData.performances = invoice.performances.map(enrichPerformances);
+    statementData.totalAmount = totalAmount(statementData);
+    statementData.totalVolumeCredits = totalVolumeCredits(statementData);
 
     function amountFor(aPerformance) {
         let result = 0;
 
-        switch (playFor(aPerformance).type) {
+        switch (aPerformance.play.type) {
         case 'tragedy':
             result = 40000;
 
@@ -90,23 +63,61 @@ function statement(invoice, plays) {
             break;
 
         default:
-            throw new Error(`unknown type: ${playFor(aPerformance).type}`);
+            throw new Error(`unknown type: ${aPerformance.play.type}`);
         }
         return result;
     }
 
-    function totalAmount() {
+    function playFor(aPerformance) {
+        return plays[aPerformance.playID];
+    }
+
+    function volumeCreditsFor(aPerformance) {
         let result = 0;
-        for (const perf of invoice.performances) {
-            result += amountFor(perf);
+        result += Math.max(aPerformance.audience - 30, 0);
+
+        // Дополнительный бонус за каждые 10 комедий
+        if (aPerformance.play.type === 'comedy') result += Math.floor(aPerformance.audience / 5);
+        return result;
+    }
+    function totalAmount(data) {
+        let result = 0;
+        for (const perf of data.performances) {
+            result += perf.amount;
         }
         return result;
     }
+    function totalVolumeCredits(data) {
+        let result = 0;
 
-    // console.log(invoice);
-    // console.log(plays);
+        for (const perf of data.performances) {
+            result += perf.volumeCredits;
+        }
+        return result;
+    }
+    function enrichPerformances(aPerformance) {
+        const result = { ...aPerformance };
+        result.play = playFor(result);
+        result.amount = amountFor(result);
+        result.volumeCredits = volumeCreditsFor(result);
+        return result;
+    }
+
+    return renderPlainText(statementData, plays);
 }
 
+function renderPlainText(data, plays) {
+    let result = `Statement for ${data.customer}\n`;
+
+    for (const perf of data.performances) {
+        result += ` ${perf.play.name}: ${usd(perf.amount / 100)}`;
+        result += ` (${perf.audience} seats)\n`;
+    }
+
+    result += `Amount owed is ${usd(data.totalAmount / 100)}\n`;
+    result += `You earned ${data.totalVolumeCredits} credits\n`;
+    return result;
+}
 const res = statement(invoiceObj[0], playsObj);
 console.log(res);
 
