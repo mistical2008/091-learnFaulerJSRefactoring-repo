@@ -69,10 +69,10 @@ function renderHtml(data) {
     return result;
 }
 
-// const res = statement(invoiceObj[0], playsObj);
-// const htmlRes = htmlStatement(invoiceObj[0], playsObj);
-// console.log(res);
-// console.log(htmlRes);
+const res = statement(invoiceObj[0], playsObj);
+const htmlRes = htmlStatement(invoiceObj[0], playsObj);
+console.log(res);
+console.log(htmlRes);
 
 module.exports.statement = statement;
 module.exports.plays = playsObj;
